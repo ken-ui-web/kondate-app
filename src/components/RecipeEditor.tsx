@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Effort, Genre, IngCategory, Ingredient, MainType, Recipe } from '../lib/types'
 import { CATEGORY_LABEL, EFFORT_LABEL, GENRE_LABEL, MAIN_LABEL } from '../lib/types'
 import Sheet from './Sheet'
+import Icon from './Icon'
 
 /**
  * 外部からレシピデータを流し込むための受け口。
@@ -137,11 +138,13 @@ export default function RecipeEditor({ initial, draft, onSave, onDelete, onClose
             >
               {CATS.map((c) => <option key={c} value={c}>{CATEGORY_LABEL[c]}</option>)}
             </select>
-            <button className="icon-btn" onClick={() => setIngs(ings.filter((_, idx) => idx !== i))}>✕</button>
+            <button className="icon-btn" onClick={() => setIngs(ings.filter((_, idx) => idx !== i))}>
+              <Icon name="x" size={13} />
+            </button>
           </div>
         ))}
         <button className="btn small subtle" onClick={() => setIngs([...ings, emptyIng()])}>
-          ＋ 材料を追加
+          <Icon name="plus" size={14} />材料を追加
         </button>
       </div>
 
@@ -152,7 +155,7 @@ export default function RecipeEditor({ initial, draft, onSave, onDelete, onClose
 
       {onDelete && (
         <button className="btn small danger" style={{ marginTop: 12 }} onClick={onDelete}>
-          🗑 このレシピを削除
+          <Icon name="trash" size={14} />このレシピを削除
         </button>
       )}
     </Sheet>

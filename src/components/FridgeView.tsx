@@ -3,6 +3,7 @@ import type { FridgeItem, MonthPlan, Recipe } from '../lib/types'
 import { GENRE_LABEL } from '../lib/types'
 import { namesMatch } from '../lib/ingredients'
 import { today } from '../lib/dates'
+import Icon from './Icon'
 
 interface Props {
   recipes: Recipe[]
@@ -67,7 +68,9 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
 
   return (
     <div>
-      <div className="section-title">🧊 いま冷蔵庫にあるもの</div>
+      <div className="section-title">
+        <Icon name="fridge" size={14} />いま冷蔵庫にあるもの
+      </div>
 
       <div className="row" style={{ marginBottom: 12 }}>
         <input
@@ -82,7 +85,7 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
 
       {fridge.length === 0 ? (
         <div className="empty-state">
-          <span className="big">🧊</span>
+          <span className="empty-ic"><Icon name="fridge" size={40} strokeWidth={1.4} /></span>
           冷蔵庫の中身を登録すると、<br />あるもので作れる献立を提案します
         </div>
       ) : (
@@ -92,7 +95,9 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
               <div className="grow">
                 <div className="name">{item.name}</div>
               </div>
-              <button className="icon-btn" onClick={() => removeItem(i)}>✕</button>
+              <button className="icon-btn" onClick={() => removeItem(i)}>
+                <Icon name="x" size={13} />
+              </button>
             </div>
           ))}
         </div>
@@ -100,13 +105,16 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
 
       {fridge.length > 0 && (
         <button className="btn block" style={{ marginTop: 8 }} onClick={() => setShowSuggest(true)}>
-          🍳 冷蔵庫にあるもので提案してもらう
+          <Icon name="soup" size={16} />
+          冷蔵庫にあるもので提案してもらう
         </button>
       )}
 
       {showSuggest && (
         <>
-          <div className="section-title">💡 おすすめ（マッチ率順）</div>
+          <div className="section-title">
+            <Icon name="bulb" size={14} />おすすめ（マッチ率順）
+          </div>
           {suggestions.length === 0 && (
             <p className="hint" style={{ margin: '0 6px' }}>
               在庫に合うレシピが見つかりませんでした。食材を追加してみてください。
@@ -115,7 +123,7 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
           {suggestions.map(({ recipe, score, have, need }) => (
             <div key={recipe.id} className="card fade-in">
               <div className="row" style={{ justifyContent: 'space-between' }}>
-                <div style={{ fontSize: 17, fontWeight: 800 }}>{recipe.name}</div>
+                <div className="dish-name" style={{ fontSize: 17 }}>{recipe.name}</div>
                 <span className={`chip ${recipe.genre}`}>{GENRE_LABEL[recipe.genre]}</span>
               </div>
               <div className="match-bar-track">
@@ -133,7 +141,8 @@ export default function FridgeView({ recipes, fridge, setFridge, plans, setPlans
                 style={{ marginTop: 12 }}
                 onClick={() => adoptToday(recipe.id)}
               >
-                {adopted === recipe.id ? '✓ 今日の献立にしました' : '📅 今日の献立にする'}
+                <Icon name={adopted === recipe.id ? 'check' : 'calendar'} size={14} />
+                {adopted === recipe.id ? '今日の献立にしました' : '今日の献立にする'}
               </button>
             </div>
           ))}

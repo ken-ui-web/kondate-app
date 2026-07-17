@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { Genre, Recipe } from '../lib/types'
 import { EFFORT_LABEL, GENRE_LABEL } from '../lib/types'
 import RecipeEditor from './RecipeEditor'
+import Icon from './Icon'
 
 interface Props {
   recipes: Recipe[]
@@ -51,7 +52,9 @@ export default function RecipesView({ recipes, setRecipes }: Props) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn" onClick={() => setCreating(true)}>＋ 追加</button>
+        <button className="btn" onClick={() => setCreating(true)}>
+          <Icon name="plus" size={15} />追加
+        </button>
       </div>
 
       <div className="seg" style={{ marginBottom: 12 }}>
@@ -82,7 +85,7 @@ export default function RecipesView({ recipes, setRecipes }: Props) {
               title={r.disabled ? '献立に使う' : '献立に使わない'}
               onClick={() => toggleDisabled(r)}
             >
-              {r.disabled ? '💤' : '👌'}
+              <Icon name={r.disabled ? 'eye-off' : 'eye'} size={15} />
             </button>
           </div>
         ))}

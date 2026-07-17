@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Settings } from '../lib/types'
 import { exportAll, importAll, type ExportData } from '../lib/storage'
+import Icon from './Icon'
 
 interface Props {
   settings: Settings
@@ -55,21 +56,29 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
 
   return (
     <div>
-      <div className="section-title">👨‍👩‍👧 家族の人数</div>
+      <div className="section-title">
+        <Icon name="users" size={14} />家族の人数
+      </div>
       <div className="card">
         <div className="row" style={{ justifyContent: 'center', gap: 20 }}>
-          <button className="cal-nav" onClick={() => bumpServings(-1)}>−</button>
-          <span style={{ fontSize: 28, fontWeight: 800, minWidth: 80, textAlign: 'center' }}>
-            {settings.servings}人分
+          <button className="cal-nav" onClick={() => bumpServings(-1)}>
+            <Icon name="minus" size={16} />
+          </button>
+          <span className="dish-name" style={{ fontSize: 26, minWidth: 92, textAlign: 'center' }}>
+            {settings.servings}<span style={{ fontSize: 15 }}>人分</span>
           </span>
-          <button className="cal-nav" onClick={() => bumpServings(1)}>＋</button>
+          <button className="cal-nav" onClick={() => bumpServings(1)}>
+            <Icon name="plus" size={16} />
+          </button>
         </div>
         <p className="hint" style={{ textAlign: 'center', marginBottom: 0 }}>
           買い物リストの分量計算に使います
         </p>
       </div>
 
-      <div className="section-title">🧂 常備品（買い物リストに載せないもの）</div>
+      <div className="section-title">
+        <Icon name="jar" size={14} />常備品（買い物リストに載せないもの）
+      </div>
       <div className="card">
         <div className="tag-list" style={{ marginTop: 0 }}>
           {settings.staples.map((s) => (
@@ -91,15 +100,21 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
         <p className="hint" style={{ marginBottom: 0 }}>タップで削除できます</p>
       </div>
 
-      <div className="section-title">💾 データのバックアップ</div>
+      <div className="section-title">
+        <Icon name="archive" size={14} />データのバックアップ
+      </div>
       <div className="card">
         <p className="hint" style={{ marginTop: 0 }}>
           データはこの端末（ブラウザ）の中に保存されています。
           機種変更やブラウザの履歴削除に備えて、ときどきバックアップを保存しておくと安心です。
         </p>
         <div className="row">
-          <button className="btn ghost grow" onClick={doExport}>⬇️ 保存する</button>
-          <button className="btn ghost grow" onClick={() => fileRef.current?.click()}>⬆️ 読み込む</button>
+          <button className="btn ghost grow" onClick={doExport}>
+            <Icon name="download" size={15} />保存する
+          </button>
+          <button className="btn ghost grow" onClick={() => fileRef.current?.click()}>
+            <Icon name="upload" size={15} />読み込む
+          </button>
         </div>
         <input
           ref={fileRef}

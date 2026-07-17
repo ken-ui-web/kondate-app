@@ -4,6 +4,7 @@ import { CATEGORY_LABEL, type IngCategory } from '../lib/types'
 import { addDays, fmtDisplay, today, weekStartSat } from '../lib/dates'
 import { buildShoppingList, fmtQty } from '../lib/shopping'
 import { namesMatch } from '../lib/ingredients'
+import Icon from './Icon'
 
 interface Props {
   recipes: Recipe[]
@@ -15,11 +16,11 @@ interface Props {
   setChecks: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
 }
 
-const CATEGORY_ICON: Record<IngCategory, string> = {
-  veg: '🥕',
-  meatfish: '🍖',
-  other: '🥚',
-  seasoning: '🧂',
+const CATEGORY_COLOR: Record<IngCategory, string> = {
+  veg: 'var(--genre-wa)',
+  meatfish: 'var(--genre-chu)',
+  other: 'var(--accent)',
+  seasoning: 'var(--genre-other)',
 }
 
 export default function ShoppingView({
@@ -75,17 +76,21 @@ export default function ShoppingView({
   return (
     <div>
       <div className="week-nav">
-        <button className="cal-nav" onClick={() => setOffset(offset - 1)}>‹</button>
+        <button className="cal-nav" onClick={() => setOffset(offset - 1)}>
+          <Icon name="chevron-left" size={17} />
+        </button>
         <div className="week-label" style={{ textAlign: 'center' }}>
           {fmtDisplay(weekStart)} 〜 {fmtDisplay(weekEnd)}
-          <span className="sub">{isUpcoming ? '🛒 今週末の買い出しリスト' : '買い出しリスト'}</span>
+          <span className="sub">{isUpcoming ? '今週末の買い出しリスト' : '買い出しリスト'}</span>
         </div>
-        <button className="cal-nav" onClick={() => setOffset(offset + 1)}>›</button>
+        <button className="cal-nav" onClick={() => setOffset(offset + 1)}>
+          <Icon name="chevron-right" size={17} />
+        </button>
       </div>
 
       {list.items.length === 0 ? (
         <div className="empty-state">
-          <span className="big">🧺</span>
+          <span className="empty-ic"><Icon name="cart" size={40} strokeWidth={1.4} /></span>
           この週の献立がまだありません。<br />
           「こんだて」タブで献立を作成すると<br />買うものが自動で集まります
         </div>
@@ -94,7 +99,8 @@ export default function ShoppingView({
           {[...grouped.entries()].map(([cat, items]) => (
             <div key={cat}>
               <div className="section-title">
-                {CATEGORY_ICON[cat]} {CATEGORY_LABEL[cat]}
+                <span className="cat-dot" style={{ background: CATEGORY_COLOR[cat] }} />
+                {CATEGORY_LABEL[cat]}
               </div>
               <div className="card" style={{ padding: '4px 14px' }}>
                 {items.map((item) => {
@@ -105,7 +111,9 @@ export default function ShoppingView({
                       className={`check-row ${checked ? 'checked' : ''}`}
                       onClick={() => toggle(item.key)}
                     >
-                      <span className="checkbox">{checked ? '✓' : ''}</span>
+                      <span className="checkbox">
+                        {checked && <Icon name="check" size={13} strokeWidth={2.8} />}
+                      </span>
                       <span className="item-name">{item.name}</span>
                       <span className="qty">{fmtQty(item)}</span>
                     </div>
@@ -117,13 +125,14 @@ export default function ShoppingView({
 
           {checkedItems.length > 0 && (
             <button className="btn block" style={{ marginTop: 14 }} onClick={moveCheckedToFridge}>
-              🧊 チェックした {checkedItems.length} 品を冷蔵庫に入れる
+              <Icon name="fridge" size={15} />
+              チェックした {checkedItems.length} 品を冷蔵庫に入れる
             </button>
           )}
 
           {list.skippedFridge.length > 0 && (
             <p className="hint" style={{ margin: '14px 6px' }}>
-              🧊 冷蔵庫にあるので省きました：{list.skippedFridge.join('、')}
+              冷蔵庫にあるので省きました：{list.skippedFridge.join('、')}
             </p>
           )}
 

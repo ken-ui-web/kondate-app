@@ -4,6 +4,7 @@ import { EFFORT_LABEL, GENRE_LABEL, MAIN_LABEL } from '../lib/types'
 import { addMonths, datesOfMonth, monthKey, parseDate, today } from '../lib/dates'
 import { generateMonthPlan, rerollDay } from '../lib/planner'
 import Sheet from './Sheet'
+import Icon from './Icon'
 
 interface Props {
   recipes: Recipe[]
@@ -55,13 +56,18 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
   return (
     <div>
       <div className="cal-header">
-        <button className="cal-nav" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
+        <button className="cal-nav" onClick={() => setMonth(addMonths(month, -1))}>
+          <Icon name="chevron-left" size={17} />
+        </button>
         <span className="cal-month">{y}年 {m}月</span>
-        <button className="cal-nav" onClick={() => setMonth(addMonths(month, 1))}>›</button>
+        <button className="cal-nav" onClick={() => setMonth(addMonths(month, 1))}>
+          <Icon name="chevron-right" size={17} />
+        </button>
       </div>
 
       <button className="btn block" onClick={generate}>
-        {hasEntries ? '🔄 この月の献立を作り直す' : '✨ この月の献立を作成する'}
+        <Icon name={hasEntries ? 'refresh' : 'sparkles'} size={16} />
+        {hasEntries ? 'この月の献立を作り直す' : 'この月の献立を作成する'}
       </button>
 
       <div style={{ height: 14 }} />
@@ -98,7 +104,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
 
       {!hasEntries && (
         <div className="empty-state">
-          <span className="big">🍳</span>
+          <span className="empty-ic"><Icon name="soup" size={40} strokeWidth={1.4} /></span>
           「献立を作成する」を押すと<br />ひと月分の晩ごはんをおまかせで決めます
         </div>
       )}
@@ -113,7 +119,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
             <>
               {selectedRecipe ? (
                 <div className="card" style={{ marginTop: 10 }}>
-                  <div style={{ fontSize: 20, fontWeight: 800 }}>{selectedRecipe.name}</div>
+                  <div className="dish-name">{selectedRecipe.name}</div>
                   <div className="tag-list">
                     <span className={`chip ${selectedRecipe.genre}`}>{GENRE_LABEL[selectedRecipe.genre]}</span>
                     <span className="chip plain">{MAIN_LABEL[selectedRecipe.mainType]}メイン</span>
@@ -135,15 +141,19 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
               )}
 
               <div className="row" style={{ marginTop: 12, flexWrap: 'wrap' }}>
-                <button className="btn" onClick={() => reroll(selected)}>🔄 引き直す</button>
-                <button className="btn ghost" onClick={() => setPicking(true)}>📖 選び直す</button>
+                <button className="btn" onClick={() => reroll(selected)}>
+                  <Icon name="refresh" size={15} />引き直す
+                </button>
+                <button className="btn ghost" onClick={() => setPicking(true)}>
+                  <Icon name="book" size={15} />選び直す
+                </button>
                 {selectedEntry !== 'none' ? (
                   <button className="btn subtle" onClick={() => { setDay(selected, 'none'); }}>
-                    🍽️ 外食・なしにする
+                    <Icon name="utensils" size={15} />外食・なしにする
                   </button>
                 ) : (
                   <button className="btn subtle" onClick={() => reroll(selected)}>
-                    献立を入れる
+                    <Icon name="sparkles" size={15} />献立を入れる
                   </button>
                 )}
               </div>

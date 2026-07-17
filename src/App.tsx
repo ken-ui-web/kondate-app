@@ -9,15 +9,16 @@ import ShoppingView from './components/ShoppingView'
 import FridgeView from './components/FridgeView'
 import RecipesView from './components/RecipesView'
 import SettingsView from './components/SettingsView'
+import Icon, { type IconName } from './components/Icon'
 
 type Tab = 'calendar' | 'shopping' | 'fridge' | 'recipes' | 'settings'
 
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'calendar', icon: '📅', label: 'こんだて' },
-  { id: 'shopping', icon: '🛒', label: '買い物' },
-  { id: 'fridge', icon: '🧊', label: '冷蔵庫' },
-  { id: 'recipes', icon: '📖', label: 'レシピ' },
-  { id: 'settings', icon: '⚙️', label: '設定' },
+const TABS: { id: Tab; icon: IconName; label: string }[] = [
+  { id: 'calendar', icon: 'calendar', label: 'こんだて' },
+  { id: 'shopping', icon: 'cart', label: '買い物' },
+  { id: 'fridge', icon: 'fridge', label: '冷蔵庫' },
+  { id: 'recipes', icon: 'book', label: 'レシピ' },
+  { id: 'settings', icon: 'settings', label: '設定' },
 ]
 
 export default function App() {
@@ -46,8 +47,8 @@ export default function App() {
   return (
     <>
       <header className="app-header">
+        <span className="app-eyebrow">DINNER PLANNER</span>
         <h1 className="app-title">献立管理アプリ</h1>
-        <span className="app-sub">毎晩のごはん、おまかせ</span>
       </header>
 
       <main className="view" key={tab}>
@@ -81,7 +82,9 @@ export default function App() {
             className={`tab ${tab === t.id ? 'active' : ''}`}
             onClick={() => setTab(t.id)}
           >
-            <span className="tab-icon">{t.icon}</span>
+            <span className="tab-ic">
+              <Icon name={t.icon} size={20} strokeWidth={1.7} />
+            </span>
             {t.label}
           </button>
         ))}
