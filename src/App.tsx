@@ -46,7 +46,7 @@ export default function App() {
   return (
     <>
       <header className="app-header">
-        <h1 className="app-title">こんだて帖<span className="dot">。</span></h1>
+        <h1 className="app-title">献立管理アプリ</h1>
         <span className="app-sub">毎晩のごはん、おまかせ</span>
       </header>
 

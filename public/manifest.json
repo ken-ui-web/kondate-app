@@ -1,6 +1,6 @@
 {
-  "name": "こんだて帖",
-  "short_name": "こんだて帖",
+  "name": "献立管理アプリ",
+  "short_name": "献立管理",
   "description": "毎晩の献立をおまかせで決めて、買い物リストまで作るアプリ",
   "start_url": "./",
   "scope": "./",

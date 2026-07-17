@@ -61,7 +61,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
       </div>
 
       <button className="btn block" onClick={generate}>
-        {hasEntries ? '🎲 この月の献立を作り直す' : '✨ この月の献立を作成する'}
+        {hasEntries ? '🔄 この月の献立を作り直す' : '✨ この月の献立を作成する'}
       </button>
 
       <div style={{ height: 14 }} />
@@ -135,7 +135,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
               )}
 
               <div className="row" style={{ marginTop: 12, flexWrap: 'wrap' }}>
-                <button className="btn" onClick={() => reroll(selected)}>🎲 引き直す</button>
+                <button className="btn" onClick={() => reroll(selected)}>🔄 引き直す</button>
                 <button className="btn ghost" onClick={() => setPicking(true)}>📖 選び直す</button>
                 {selectedEntry !== 'none' ? (
                   <button className="btn subtle" onClick={() => { setDay(selected, 'none'); }}>

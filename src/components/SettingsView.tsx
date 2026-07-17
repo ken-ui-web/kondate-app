@@ -115,7 +115,7 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
       </div>
 
       <p className="hint" style={{ textAlign: 'center', marginTop: 20 }}>
-        こんだて帖 v1.0
+        献立管理アプリ v1.0
       </p>
     </div>
   )
