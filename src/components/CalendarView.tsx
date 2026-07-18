@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MonthPlan, Recipe } from '../lib/types'
 import { EFFORT_LABEL, GENRE_LABEL, MAIN_LABEL } from '../lib/types'
 import { addMonths, datesOfMonth, monthKey, parseDate, today } from '../lib/dates'
@@ -14,6 +14,8 @@ interface Props {
 
 const LONG_PRESS_MS = 320
 const MOVE_THRESHOLD = 10
+const SCROLL_EDGE = 90 // px。画面端からこの距離に入るとオートスクロール開始
+const SCROLL_MAX_SPEED = 16 // px/フレーム
 
 export default function CalendarView({ recipes, plans, setPlans }: Props) {
   const [month, setMonth] = useState(() => monthKey(new Date()))
@@ -26,6 +28,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
   const [overDate, setOverDate] = useState<string | null>(null)
   const dragTimer = useRef<number | null>(null)
   const startPos = useRef<{ x: number; y: number } | null>(null)
+  const pointerPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const isDraggingRef = useRef(false)
   const movedRef = useRef(false)
 
@@ -75,8 +78,14 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
 
   const onCellPointerDown = (date: string, e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    e.currentTarget.setPointerCapture(e.pointerId)
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // 一部の環境ではポインタキャプチャに失敗することがあるが、
+      // 通常のイベント伝播でも動作は継続できるため無視する
+    }
     startPos.current = { x: e.clientX, y: e.clientY }
+    pointerPos.current = { x: e.clientX, y: e.clientY }
     movedRef.current = false
     isDraggingRef.current = false
     clearDragTimer()
@@ -88,6 +97,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
   }
 
   const onCellPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointerPos.current = { x: e.clientX, y: e.clientY }
     if (startPos.current) {
       const dx = e.clientX - startPos.current.x
       const dy = e.clientY - startPos.current.y
@@ -104,6 +114,31 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
       setOverDate((prev) => (prev === d ? prev : d))
     }
   }
+
+  // ドラッグ中、画面端に近づいたら自動スクロールし、スクロール後も
+  // ポインタ直下のセルを再計算し続ける（指を止めたままでも判定を更新するため）。
+  // rAFはタブが非表示扱いだと止まる環境があるためsetIntervalを使う。
+  useEffect(() => {
+    if (dragDate === null) return
+    const tick = () => {
+      const { x, y } = pointerPos.current
+      const vh = window.innerHeight
+      let dy = 0
+      if (y < SCROLL_EDGE) {
+        dy = -SCROLL_MAX_SPEED * (1 - y / SCROLL_EDGE)
+      } else if (y > vh - SCROLL_EDGE) {
+        dy = SCROLL_MAX_SPEED * (1 - (vh - y) / SCROLL_EDGE)
+      }
+      if (dy !== 0) window.scrollBy(0, dy)
+
+      const el = document.elementFromPoint(x, y)
+      const cell = el?.closest<HTMLElement>('.cal-cell[data-date]')
+      const d = cell?.dataset.date ?? null
+      setOverDate((prev) => (prev === d ? prev : d))
+    }
+    const id = window.setInterval(tick, 16)
+    return () => window.clearInterval(id)
+  }, [dragDate])
 
   const onCellPointerUp = (date: string) => {
     clearDragTimer()

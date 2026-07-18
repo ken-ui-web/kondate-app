@@ -94,7 +94,7 @@ export function saveCustomShopping(data: Record<string, CustomShoppingItem[]>) {
   save(KEYS.customShopping, data)
 }
 
-// --- Claude APIキー ---
+// --- Google AI Studio (Gemini) APIキー ---
 // バックアップ（エクスポート/インポート）には含めない。この端末にだけ保存する。
 
 export function loadApiKey(): string {

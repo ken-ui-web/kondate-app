@@ -75,7 +75,7 @@ export default function RecipeEditor({ initial, draft, allRecipes, onSave, onDel
     const dishName = name.trim()
     if (!dishName) { setAiError('先に料理名を入力してください'); return }
     const apiKey = loadApiKey()
-    if (!apiKey) { setAiError('設定画面でClaude APIキーを登録すると使えます'); return }
+    if (!apiKey) { setAiError('設定画面でGoogle AI StudioのAPIキーを登録すると使えます'); return }
     setAiError(null)
     setAiBusy('name')
     try {
@@ -90,7 +90,7 @@ export default function RecipeEditor({ initial, draft, allRecipes, onSave, onDel
 
   const runAiFromPhoto = async (file: File) => {
     const apiKey = loadApiKey()
-    if (!apiKey) { setAiError('設定画面でClaude APIキーを登録すると使えます'); return }
+    if (!apiKey) { setAiError('設定画面でGoogle AI StudioのAPIキーを登録すると使えます'); return }
     setAiError(null)
     setAiBusy('photo')
     try {

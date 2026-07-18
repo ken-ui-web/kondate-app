@@ -1,34 +1,39 @@
-import Anthropic from '@anthropic-ai/sdk'
 import type { RecipeDraft } from './types'
 
-const MODEL = 'claude-opus-4-8'
+/**
+ * Google AI Studio（Gemini API）を使ったレシピ自動入力。
+ * APIキーはユーザー自身がこの端末のブラウザ内にのみ保存し、直接 generativelanguage.googleapis.com へ
+ * リクエストする（サーバーは介さない）。
+ */
+
+const MODEL = 'gemini-3.5-flash'
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
 export class AiError extends Error {}
 
+// Gemini の responseSchema は OpenAPI のサブセットで、type は大文字（STRING/OBJECT/ARRAY など）
 const RECIPE_SCHEMA = {
-  type: 'object',
+  type: 'OBJECT',
   properties: {
-    name: { type: 'string' },
-    genre: { type: 'string', enum: ['wa', 'yo', 'chu', 'other'] },
-    mainType: { type: 'string', enum: ['meat', 'fish', 'other'] },
-    effort: { type: 'string', enum: ['easy', 'normal', 'hard'] },
+    name: { type: 'STRING' },
+    genre: { type: 'STRING', enum: ['wa', 'yo', 'chu', 'other'] },
+    mainType: { type: 'STRING', enum: ['meat', 'fish', 'other'] },
+    effort: { type: 'STRING', enum: ['easy', 'normal', 'hard'] },
     ingredients: {
-      type: 'array',
+      type: 'ARRAY',
       items: {
-        type: 'object',
+        type: 'OBJECT',
         properties: {
-          name: { type: 'string' },
-          qty: { type: 'number' },
-          unit: { type: 'string' },
-          category: { type: 'string', enum: ['veg', 'meatfish', 'other', 'seasoning'] },
+          name: { type: 'STRING' },
+          qty: { type: 'NUMBER' },
+          unit: { type: 'STRING' },
+          category: { type: 'STRING', enum: ['veg', 'meatfish', 'other', 'seasoning'] },
         },
         required: ['name', 'qty', 'unit', 'category'],
-        additionalProperties: false,
       },
     },
   },
   required: ['name', 'genre', 'mainType', 'effort', 'ingredients'],
-  additionalProperties: false,
 } as const
 
 const CATEGORY_HINT =
@@ -37,20 +42,66 @@ const CATEGORY_HINT =
   'のいずれかで答えてください。塩・こしょう・砂糖・醤油など「適量でよい調味料」は qty を 0 にしてください。' +
   '分量が決まる材料は2人分の目安の数値を入れてください。'
 
-function client(apiKey: string): Anthropic {
-  return new Anthropic({ apiKey: apiKey.trim(), dangerouslyAllowBrowser: true })
+interface GeminiPart {
+  text?: string
+  inlineData?: { mimeType: string; data: string }
 }
 
-function extractDraft(response: Anthropic.Message): RecipeDraft {
-  if (response.stop_reason === 'refusal') {
+async function callGemini(apiKey: string, parts: GeminiPart[]): Promise<RecipeDraft> {
+  const key = apiKey.trim()
+  if (!key) throw new AiError('設定画面でGoogle AI StudioのAPIキーを入力してください')
+
+  const url = `${API_BASE}/models/${MODEL}:generateContent?key=${encodeURIComponent(key)}`
+
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: RECIPE_SCHEMA,
+        },
+      }),
+    })
+  } catch {
+    throw new AiError('通信に失敗しました。インターネット接続を確認してください')
+  }
+
+  const data = await res.json().catch(() => null)
+
+  if (!res.ok) {
+    const msg: string | undefined = data?.error?.message
+    if (res.status === 400 || res.status === 403) {
+      throw new AiError('APIキーが正しくないか、権限がありません。設定画面を確認してください')
+    }
+    if (res.status === 429) {
+      throw new AiError('リクエストが混み合っています。しばらくしてから試してください')
+    }
+    if (res.status >= 500) {
+      throw new AiError('AI側でエラーが発生しました。しばらくしてから試してください')
+    }
+    throw new AiError(msg ? `エラーが発生しました：${msg}` : `エラーが発生しました（${res.status}）`)
+  }
+
+  if (!data) throw new AiError('レシピを読み取れませんでした')
+
+  if (!data.candidates || data.candidates.length === 0) {
     throw new AiError('この内容には対応できませんでした。別の言い方や写真で試してください')
   }
-  const textBlock = response.content.find(
-    (b): b is Anthropic.TextBlock => b.type === 'text',
-  )
-  if (!textBlock) throw new AiError('レシピを読み取れませんでした')
+
+  const candidate = data.candidates[0]
+  if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'RECITATION') {
+    throw new AiError('この内容には対応できませんでした。別の言い方や写真で試してください')
+  }
+
+  const text: string | undefined = candidate.content?.parts?.[0]?.text
+  if (!text) throw new AiError('レシピを読み取れませんでした')
+
   try {
-    const raw = JSON.parse(textBlock.text)
+    const raw = JSON.parse(text)
     return {
       name: raw.name,
       genre: raw.genre,
@@ -63,45 +114,13 @@ function extractDraft(response: Anthropic.Message): RecipeDraft {
   }
 }
 
-function toFriendlyError(e: unknown): AiError {
-  if (e instanceof AiError) return e
-  if (e instanceof Anthropic.AuthenticationError) {
-    return new AiError('APIキーが正しくありません。設定画面を確認してください')
-  }
-  if (e instanceof Anthropic.PermissionDeniedError) {
-    return new AiError('このAPIキーには権限がありません')
-  }
-  if (e instanceof Anthropic.RateLimitError) {
-    return new AiError('リクエストが混み合っています。しばらくしてから試してください')
-  }
-  if (e instanceof Anthropic.APIConnectionError) {
-    return new AiError('通信に失敗しました。インターネット接続を確認してください')
-  }
-  if (e instanceof Anthropic.APIError) {
-    return new AiError(`AIとの通信でエラーが発生しました（${e.message}）`)
-  }
-  return new AiError('予期しないエラーが発生しました')
-}
-
 /** メニュー名から材料リストなどを自動生成する */
 export async function generateRecipeFromName(apiKey: string, dishName: string): Promise<RecipeDraft> {
-  if (!apiKey.trim()) throw new AiError('設定画面でClaude APIキーを入力してください')
-  try {
-    const response = await client(apiKey).messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      output_config: { format: { type: 'json_schema', schema: RECIPE_SCHEMA } },
-      messages: [{
-        role: 'user',
-        content:
-          `日本の家庭料理「${dishName}」の2人分のレシピ情報を教えてください。` +
-          `一般的でよく使われる材料名（例：たまねぎ、豚こま切れ肉）で答えてください。${CATEGORY_HINT}`,
-      }],
-    })
-    return extractDraft(response)
-  } catch (e) {
-    throw toFriendlyError(e)
-  }
+  return callGemini(apiKey, [{
+    text:
+      `日本の家庭料理「${dishName}」の2人分のレシピ情報を教えてください。` +
+      `一般的でよく使われる材料名（例：たまねぎ、豚こま切れ肉）で答えてください。${CATEGORY_HINT}`,
+  }])
 }
 
 /** 料理雑誌・レシピ本の写真からメニュー名と材料を読み取る */
@@ -110,27 +129,12 @@ export async function generateRecipeFromImage(
   base64: string,
   mediaType: 'image/jpeg' | 'image/png',
 ): Promise<RecipeDraft> {
-  if (!apiKey.trim()) throw new AiError('設定画面でClaude APIキーを入力してください')
-  try {
-    const response = await client(apiKey).messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      output_config: { format: { type: 'json_schema', schema: RECIPE_SCHEMA } },
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          {
-            type: 'text',
-            text:
-              '料理雑誌かレシピ本の写真です。写っている料理名と、2人分に換算した材料リストを読み取ってください。' +
-              `写真に分量の記載があればそれを2人分に換算し、記載がなければ一般的な目安量にしてください。${CATEGORY_HINT}`,
-          },
-        ],
-      }],
-    })
-    return extractDraft(response)
-  } catch (e) {
-    throw toFriendlyError(e)
-  }
+  return callGemini(apiKey, [
+    { inlineData: { mimeType: mediaType, data: base64 } },
+    {
+      text:
+        '料理雑誌かレシピ本の写真です。写っている料理名と、2人分に換算した材料リストを読み取ってください。' +
+        `写真に分量の記載があればそれを2人分に換算し、記載がなければ一般的な目安量にしてください。${CATEGORY_HINT}`,
+    },
+  ])
 }

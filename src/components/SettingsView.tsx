@@ -115,15 +115,15 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
       <div className="card">
         <p className="hint" style={{ marginTop: 0 }}>
           レシピ登録時に「メニュー名から材料を自動入力」「写真からレシピを読み取る」を使うには、
-          ご自身のClaude APIキーが必要です。従量課金制で、1回の生成につき数円〜数十円ほどかかります。
+          ご自身のGoogle AI Studio（Gemini）のAPIキーが必要です。無料枠がありますが、使いすぎると課金される場合があります。
         </p>
         <div className="field" style={{ marginBottom: 8 }}>
-          <label>Claude APIキー</label>
+          <label>Google AI Studio APIキー</label>
           <div className="row">
             <input
               className="input grow"
               type={showKey ? 'text' : 'password'}
-              placeholder="sk-ant-..."
+              placeholder="AIzaSy... など"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               onBlur={commitApiKey}
@@ -139,7 +139,7 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
           <p className="hint" style={{ color: 'var(--ok)', marginBottom: 0 }}>保存しました</p>
         )}
         <p className="hint" style={{ marginBottom: 0 }}>
-          キーは console.anthropic.com で発行できます。この端末のブラウザ内にのみ保存され、
+          キーは aistudio.google.com/apikey で発行できます。この端末のブラウザ内にのみ保存され、
           バックアップファイルには含まれません。他の人には共有されません。
         </p>
       </div>
