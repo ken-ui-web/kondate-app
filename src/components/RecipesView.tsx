@@ -95,6 +95,7 @@ export default function RecipesView({ recipes, setRecipes }: Props) {
       {(creating || editing) && (
         <RecipeEditor
           initial={editing ?? undefined}
+          allRecipes={recipes}
           onSave={upsert}
           onDelete={editing && !editing.isBuiltin ? () => remove(editing) : undefined}
           onClose={() => { setEditing(null); setCreating(false) }}

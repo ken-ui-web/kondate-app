@@ -373,9 +373,13 @@ svg { display: block; flex-shrink: 0; }
   flex-direction: column;
   gap: 2px;
   cursor: pointer;
-  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
 }
 
 .cal-cell:active { transform: scale(0.95); }
@@ -385,6 +389,18 @@ svg { display: block; flex-shrink: 0; }
   background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
 }
 .cal-cell.past { opacity: 0.5; }
+
+.cal-cell.drag-source {
+  opacity: 0.4;
+  transform: scale(0.92);
+  touch-action: none;
+}
+.cal-cell.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+  transform: scale(1.04);
+}
 
 .cal-date {
   font-size: 10.5px;
@@ -628,6 +644,78 @@ svg { display: block; flex-shrink: 0; }
 
 .row { display: flex; gap: 8px; align-items: center; }
 .row > .grow { flex: 1; }
+
+/* ===== 材料行・タップ選択 ===== */
+
+.ing-row {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.ing-row-2 { margin-top: 8px; }
+
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.qty-num {
+  width: 46px;
+  text-align: center;
+  padding: 8px 2px;
+  -moz-appearance: textfield;
+}
+.qty-num::-webkit-inner-spin-button,
+.qty-num::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn.block.subtle { box-shadow: none; }
+
+.ing-picker {
+  background: var(--surface-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.ing-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ing-chip {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ing-chip:active { transform: scale(0.94); }
+
+.ing-chip.new {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
 
 /* ===== 提案カード ===== */
 

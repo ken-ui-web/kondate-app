@@ -36,9 +36,29 @@ export interface FridgeItem {
   note?: string
 }
 
+/** 買い物リストにユーザーが自分で追加した項目（週ごと） */
+export interface CustomShoppingItem {
+  id: string
+  name: string
+  category: IngCategory
+}
+
 export interface Settings {
   servings: number
   staples: string[]
+}
+
+/**
+ * 外部からレシピデータを流し込むための受け口。
+ * AIによる自動入力（メニュー名からの生成／写真からの読み取り）の結果をこの形に整形して
+ * RecipeEditor の draft に渡す。
+ */
+export interface RecipeDraft {
+  name?: string
+  genre?: Genre
+  mainType?: MainType
+  effort?: Effort
+  ingredients?: Ingredient[]
 }
 
 export const GENRE_LABEL: Record<Genre, string> = {

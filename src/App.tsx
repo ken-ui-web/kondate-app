@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { FridgeItem, MonthPlan, Recipe, Settings } from './lib/types'
+import type { CustomShoppingItem, FridgeItem, MonthPlan, Recipe, Settings } from './lib/types'
 import {
-  loadChecks, loadFridge, loadPlans, loadRecipes, loadSettings,
-  saveChecks, saveFridge, savePlans, saveRecipes, saveSettings,
+  loadChecks, loadCustomShopping, loadFridge, loadPlans, loadRecipes, loadSettings,
+  saveChecks, saveCustomShopping, saveFridge, savePlans, saveRecipes, saveSettings,
 } from './lib/storage'
 import CalendarView from './components/CalendarView'
 import ShoppingView from './components/ShoppingView'
@@ -28,12 +28,15 @@ export default function App() {
   const [fridge, setFridge] = useState<FridgeItem[]>(loadFridge)
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const [checks, setChecks] = useState<Record<string, boolean>>(loadChecks)
+  const [customShopping, setCustomShopping] =
+    useState<Record<string, CustomShoppingItem[]>>(loadCustomShopping)
 
   useEffect(() => saveRecipes(recipes), [recipes])
   useEffect(() => savePlans(plans), [plans])
   useEffect(() => saveFridge(fridge), [fridge])
   useEffect(() => saveSettings(settings), [settings])
   useEffect(() => saveChecks(checks), [checks])
+  useEffect(() => saveCustomShopping(customShopping), [customShopping])
 
   // 設定インポート後などに全状態を読み直す
   const reloadAll = () => {
@@ -42,6 +45,7 @@ export default function App() {
     setFridge(loadFridge())
     setSettings(loadSettings())
     setChecks(loadChecks())
+    setCustomShopping(loadCustomShopping())
   }
 
   return (
@@ -59,6 +63,7 @@ export default function App() {
           <ShoppingView
             recipes={recipes} plans={plans} fridge={fridge} setFridge={setFridge}
             settings={settings} checks={checks} setChecks={setChecks}
+            customShopping={customShopping} setCustomShopping={setCustomShopping}
           />
         )}
         {tab === 'fridge' && (

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Settings } from '../lib/types'
-import { exportAll, importAll, type ExportData } from '../lib/storage'
+import { exportAll, importAll, loadApiKey, saveApiKey, type ExportData } from '../lib/storage'
 import Icon from './Icon'
 
 interface Props {
@@ -12,6 +12,15 @@ interface Props {
 export default function SettingsView({ settings, setSettings, onImported }: Props) {
   const [newStaple, setNewStaple] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const [apiKey, setApiKey] = useState(loadApiKey)
+  const [showKey, setShowKey] = useState(false)
+  const [savedFlash, setSavedFlash] = useState(false)
+
+  const commitApiKey = () => {
+    saveApiKey(apiKey.trim())
+    setSavedFlash(true)
+    window.setTimeout(() => setSavedFlash(false), 1500)
+  }
 
   const bumpServings = (delta: number) => {
     setSettings((prev) => ({ ...prev, servings: Math.min(8, Math.max(1, prev.servings + delta)) }))
@@ -98,6 +107,41 @@ export default function SettingsView({ settings, setSettings, onImported }: Prop
           <button className="btn small" onClick={addStaple}>追加</button>
         </div>
         <p className="hint" style={{ marginBottom: 0 }}>タップで削除できます</p>
+      </div>
+
+      <div className="section-title">
+        <Icon name="key" size={14} />AIによる自動入力（任意）
+      </div>
+      <div className="card">
+        <p className="hint" style={{ marginTop: 0 }}>
+          レシピ登録時に「メニュー名から材料を自動入力」「写真からレシピを読み取る」を使うには、
+          ご自身のClaude APIキーが必要です。従量課金制で、1回の生成につき数円〜数十円ほどかかります。
+        </p>
+        <div className="field" style={{ marginBottom: 8 }}>
+          <label>Claude APIキー</label>
+          <div className="row">
+            <input
+              className="input grow"
+              type={showKey ? 'text' : 'password'}
+              placeholder="sk-ant-..."
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onBlur={commitApiKey}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button className="icon-btn" onClick={() => setShowKey((v) => !v)}>
+              <Icon name={showKey ? 'eye-off' : 'eye'} size={15} />
+            </button>
+          </div>
+        </div>
+        {savedFlash && (
+          <p className="hint" style={{ color: 'var(--ok)', marginBottom: 0 }}>保存しました</p>
+        )}
+        <p className="hint" style={{ marginBottom: 0 }}>
+          キーは console.anthropic.com で発行できます。この端末のブラウザ内にのみ保存され、
+          バックアップファイルには含まれません。他の人には共有されません。
+        </p>
       </div>
 
       <div className="section-title">

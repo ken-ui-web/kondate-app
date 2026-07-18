@@ -1,4 +1,4 @@
-import type { FridgeItem, MonthPlan, Recipe, Settings } from './types'
+import type { CustomShoppingItem, FridgeItem, MonthPlan, Recipe, Settings } from './types'
 import { BUILTIN_RECIPES } from '../data/builtinRecipes'
 
 const KEYS = {
@@ -7,6 +7,8 @@ const KEYS = {
   fridge: 'kondate.fridge',
   settings: 'kondate.settings',
   checks: 'kondate.checks',
+  customShopping: 'kondate.customShopping',
+  apiKey: 'kondate.apiKey',
 } as const
 
 function load<T>(key: string, fallback: T): T {
@@ -82,6 +84,27 @@ export function saveChecks(checks: Record<string, boolean>) {
   save(KEYS.checks, checks)
 }
 
+// --- 買い物リストの手動追加項目（週ごと） ---
+
+export function loadCustomShopping(): Record<string, CustomShoppingItem[]> {
+  return load(KEYS.customShopping, {})
+}
+
+export function saveCustomShopping(data: Record<string, CustomShoppingItem[]>) {
+  save(KEYS.customShopping, data)
+}
+
+// --- Claude APIキー ---
+// バックアップ（エクスポート/インポート）には含めない。この端末にだけ保存する。
+
+export function loadApiKey(): string {
+  return load(KEYS.apiKey, '')
+}
+
+export function saveApiKey(key: string) {
+  save(KEYS.apiKey, key)
+}
+
 // --- エクスポート / インポート ---
 
 export interface ExportData {
@@ -93,6 +116,7 @@ export interface ExportData {
   fridge: FridgeItem[]
   settings: Settings
   checks: Record<string, boolean>
+  customShopping?: Record<string, CustomShoppingItem[]>
 }
 
 export function exportAll(): ExportData {
@@ -105,6 +129,7 @@ export function exportAll(): ExportData {
     fridge: loadFridge(),
     settings: loadSettings(),
     checks: loadChecks(),
+    customShopping: loadCustomShopping(),
   }
 }
 
@@ -115,4 +140,5 @@ export function importAll(data: ExportData) {
   saveFridge(data.fridge)
   saveSettings(data.settings)
   saveChecks(data.checks ?? {})
+  saveCustomShopping(data.customShopping ?? {})
 }

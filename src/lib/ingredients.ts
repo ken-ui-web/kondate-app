@@ -70,3 +70,12 @@ export function namesMatch(a: string, b: string): boolean {
   }
   return false
 }
+
+/** レシピ材料と照合して、それらしいカテゴリを推測する（買い物リストの手動追加項目用） */
+export function guessCategory(
+  name: string,
+  library: { name: string; category: 'veg' | 'meatfish' | 'other' | 'seasoning' }[],
+): 'veg' | 'meatfish' | 'other' | 'seasoning' {
+  const hit = library.find((l) => namesMatch(l.name, name))
+  return hit?.category ?? 'other'
+}

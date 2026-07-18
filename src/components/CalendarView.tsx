@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { MonthPlan, Recipe } from '../lib/types'
 import { EFFORT_LABEL, GENRE_LABEL, MAIN_LABEL } from '../lib/types'
 import { addMonths, datesOfMonth, monthKey, parseDate, today } from '../lib/dates'
@@ -12,11 +12,22 @@ interface Props {
   setPlans: (p: Record<string, MonthPlan>) => void
 }
 
+const LONG_PRESS_MS = 320
+const MOVE_THRESHOLD = 10
+
 export default function CalendarView({ recipes, plans, setPlans }: Props) {
   const [month, setMonth] = useState(() => monthKey(new Date()))
   const [selected, setSelected] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [search, setSearch] = useState('')
+
+  // --- 長押しドラッグでの並び替え ---
+  const [dragDate, setDragDate] = useState<string | null>(null)
+  const [overDate, setOverDate] = useState<string | null>(null)
+  const dragTimer = useRef<number | null>(null)
+  const startPos = useRef<{ x: number; y: number } | null>(null)
+  const isDraggingRef = useRef(false)
+  const movedRef = useRef(false)
 
   const recipeMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
   const plan = plans[month]
@@ -36,9 +47,76 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
     setPlans({ ...plans, [month]: { ...base, days: { ...base.days, [date]: entry } } })
   }
 
+  const swapDays = (a: string, b: string) => {
+    const base = plans[month] ?? { month, days: {} }
+    const entryA = base.days[a] ?? null
+    const entryB = base.days[b] ?? null
+    setPlans({ ...plans, [month]: { ...base, days: { ...base.days, [a]: entryB, [b]: entryA } } })
+  }
+
   const reroll = (date: string) => {
     const id = rerollDay(date, recipes, plans)
     if (id) setDay(date, id)
+  }
+
+  const clearDragTimer = () => {
+    if (dragTimer.current != null) {
+      window.clearTimeout(dragTimer.current)
+      dragTimer.current = null
+    }
+  }
+
+  const endDrag = () => {
+    clearDragTimer()
+    isDraggingRef.current = false
+    setDragDate(null)
+    setOverDate(null)
+  }
+
+  const onCellPointerDown = (date: string, e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    startPos.current = { x: e.clientX, y: e.clientY }
+    movedRef.current = false
+    isDraggingRef.current = false
+    clearDragTimer()
+    dragTimer.current = window.setTimeout(() => {
+      isDraggingRef.current = true
+      setDragDate(date)
+      setOverDate(date)
+    }, LONG_PRESS_MS)
+  }
+
+  const onCellPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (startPos.current) {
+      const dx = e.clientX - startPos.current.x
+      const dy = e.clientY - startPos.current.y
+      if (Math.hypot(dx, dy) > MOVE_THRESHOLD) {
+        movedRef.current = true
+        if (!isDraggingRef.current) clearDragTimer()
+      }
+    }
+    if (isDraggingRef.current) {
+      e.preventDefault()
+      const el = document.elementFromPoint(e.clientX, e.clientY)
+      const cell = el?.closest<HTMLElement>('.cal-cell[data-date]')
+      const d = cell?.dataset.date ?? null
+      setOverDate((prev) => (prev === d ? prev : d))
+    }
+  }
+
+  const onCellPointerUp = (date: string) => {
+    clearDragTimer()
+    if (isDraggingRef.current) {
+      const target = overDate
+      endDrag()
+      if (target && target !== date) swapDays(date, target)
+      return
+    }
+    endDrag()
+    if (!movedRef.current) {
+      setSelected(date); setPicking(false); setSearch('')
+    }
   }
 
   const [y, m] = month.split('-').map(Number)
@@ -70,6 +148,12 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
         {hasEntries ? 'この月の献立を作り直す' : 'この月の献立を作成する'}
       </button>
 
+      {hasEntries && (
+        <p className="hint" style={{ textAlign: 'center', margin: '10px 4px 0' }}>
+          長押ししてドラッグすると、日付を入れ替えられます
+        </p>
+      )}
+
       <div style={{ height: 14 }} />
 
       <div className="cal-dow">
@@ -85,11 +169,24 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
           const recipe = entry && entry !== 'none' ? recipeMap.get(entry) : undefined
           const dow = parseDate(date).getDay()
           const isPast = date < todayStr
+          const isDragSource = dragDate === date
+          const isDragOver = dragDate !== null && overDate === date && overDate !== dragDate
           return (
             <div
               key={date}
-              className={`cal-cell ${date === todayStr ? 'today' : ''} ${isPast ? 'past' : ''}`}
-              onClick={() => { setSelected(date); setPicking(false); setSearch('') }}
+              data-date={date}
+              className={[
+                'cal-cell',
+                date === todayStr ? 'today' : '',
+                isPast ? 'past' : '',
+                isDragSource ? 'drag-source' : '',
+                isDragOver ? 'drag-over' : '',
+              ].join(' ').trim()}
+              onPointerDown={(e) => onCellPointerDown(date, e)}
+              onPointerMove={onCellPointerMove}
+              onPointerUp={() => onCellPointerUp(date)}
+              onPointerCancel={endDrag}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <span className={`cal-date ${dow === 0 ? 'sun' : dow === 6 ? 'sat' : ''}`}>
                 {Number(date.slice(-2))}
