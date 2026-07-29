@@ -31,6 +31,8 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
   const pointerPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const isDraggingRef = useRef(false)
   const movedRef = useRef(false)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const ghostRef = useRef<HTMLDivElement>(null)
 
   const recipeMap = useMemo(() => new Map(recipes.map((r) => [r.id, r])), [recipes])
   const plan = plans[month]
@@ -93,6 +95,8 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
       isDraggingRef.current = true
       setDragDate(date)
       setOverDate(date)
+      // ドラッグモードに入ったことを指先で分かるように（対応端末のみ）
+      navigator.vibrate?.(15)
     }, LONG_PRESS_MS)
   }
 
@@ -115,6 +119,33 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
     }
   }
 
+  // スマホでは指を縦に動かすとブラウザがページスクロールとして横取りしてしまい、
+  // 別の週へドラッグできない。touch-action は指を置いた時点で決まりCSSでは切り替えられないため、
+  // 非パッシブな touchmove で preventDefault してドラッグ中だけスクロールを止める。
+  useEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const onTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current && e.cancelable) e.preventDefault()
+    }
+    grid.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => grid.removeEventListener('touchmove', onTouchMove)
+  }, [])
+
+  // 長押しを待っている間にページがスクロールし始めたら、ユーザーはスクロール操作を
+  // しているのでドラッグ開始を取りやめる（スクロール開始後は preventDefault が効かないため）
+  useEffect(() => {
+    const onScroll = () => {
+      if (isDraggingRef.current) return
+      if (dragTimer.current != null) {
+        window.clearTimeout(dragTimer.current)
+        dragTimer.current = null
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   // ドラッグ中、画面端に近づいたら自動スクロールし、スクロール後も
   // ポインタ直下のセルを再計算し続ける（指を止めたままでも判定を更新するため）。
   // rAFはタブが非表示扱いだと止まる環境があるためsetIntervalを使う。
@@ -130,6 +161,11 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
         dy = SCROLL_MAX_SPEED * (1 - (vh - y) / SCROLL_EDGE)
       }
       if (dy !== 0) window.scrollBy(0, dy)
+
+      // 指の位置に追従するゴースト（指の下に隠れて何を運んでいるか見えないため）
+      if (ghostRef.current) {
+        ghostRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -170%)`
+      }
 
       const el = document.elementFromPoint(x, y)
       const cell = el?.closest<HTMLElement>('.cal-cell[data-date]')
@@ -185,7 +221,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
 
       {hasEntries && (
         <p className="hint" style={{ textAlign: 'center', margin: '10px 4px 0' }}>
-          長押ししてドラッグすると、日付を入れ替えられます
+          長押ししてから指を離さずに動かすと、日付を入れ替えられます
         </p>
       )}
 
@@ -195,7 +231,7 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
         {['日', '月', '火', '水', '木', '金', '土'].map((d) => <span key={d}>{d}</span>)}
       </div>
 
-      <div className="cal-grid">
+      <div className="cal-grid" ref={gridRef}>
         {Array.from({ length: leadingBlanks }).map((_, i) => (
           <div key={`blank-${i}`} className="cal-cell empty" />
         ))}
@@ -233,6 +269,23 @@ export default function CalendarView({ recipes, plans, setPlans }: Props) {
           )
         })}
       </div>
+
+      {dragDate && (
+        <div
+          className="drag-ghost"
+          ref={ghostRef}
+          style={{
+            transform: `translate(${pointerPos.current.x}px, ${pointerPos.current.y}px) translate(-50%, -170%)`,
+          }}
+        >
+          {(() => {
+            const e = plan?.days[dragDate]
+            if (e === 'none') return '外食・なし'
+            const r = e ? recipeMap.get(e) : undefined
+            return r?.name ?? '（献立なし）'
+          })()}
+        </div>
+      )}
 
       {!hasEntries && (
         <div className="empty-state">

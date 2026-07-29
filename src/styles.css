@@ -402,6 +402,27 @@ svg { display: block; flex-shrink: 0; }
   transform: scale(1.04);
 }
 
+/* ドラッグ中に指へ追従する札。指の下に隠れて何を運んでいるか分からなくなるのを防ぐ */
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  white-space: nowrap;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cal-date {
   font-size: 10.5px;
   font-weight: 700;
