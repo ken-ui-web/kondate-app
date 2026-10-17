@@ -43,4 +43,6 @@ export interface RecipeSearchState {
   searched: { ingredients: string[]; kinds: MealKind[] } | null
   results: RecipeSuggestion[] | null
   searchSuggestionsHtml: string | null
+  /** 直近の結果がGoogle検索で実在ページを探したものか */
+  grounded?: boolean
 }

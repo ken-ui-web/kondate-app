@@ -27,7 +27,7 @@ export default function RecipeSearchView({ state, setState }: Props) {
   const [keySaved, setKeySaved] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const { ingredients, kinds, searched, results, searchSuggestionsHtml } = state
+  const { ingredients, kinds, searched, results, searchSuggestionsHtml, grounded } = state
 
   const addIngredients = (raw: string): string[] => {
     const added = splitIngredients(raw)
@@ -73,7 +73,12 @@ export default function RecipeSearchView({ state, setState }: Props) {
     setLoading(true)
     try {
       const r = await searchRecipes(key, list, kinds)
-      setState((s) => ({ ...s, results: r.recipes, searchSuggestionsHtml: r.searchSuggestionsHtml }))
+      setState((s) => ({
+        ...s,
+        results: r.recipes,
+        searchSuggestionsHtml: r.searchSuggestionsHtml,
+        grounded: r.grounded,
+      }))
     } catch (e) {
       setError(e instanceof SearchError ? e.message : 'レシピの検索に失敗しました')
     } finally {
@@ -162,6 +167,12 @@ export default function RecipeSearchView({ state, setState }: Props) {
               AIでレシピ案をまとめて表示するには、下の「AI検索の設定」でGoogle AI StudioのAPIキーを登録してください。
               キーがなくても、その下のボタンから各レシピサイトで直接探せます。
             </div>
+          )}
+
+          {!loading && results && grounded === false && (
+            <p className="hint" style={{ margin: '0 4px 10px' }}>
+              無料枠ではAIのGoogle検索が使えないため、AIが料理案を考え、各レシピサイトの検索結果へリンクしています。
+            </p>
           )}
 
           {!loading && results && results.map((r, i) => (
