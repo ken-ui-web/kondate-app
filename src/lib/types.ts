@@ -14,8 +14,11 @@ export const MEAL_SHORT: Record<MealKind, string> = {
   soup: '汁物',
 }
 
+/** 献立の入力欄。lunch は土日のお昼（メインのおかずのみ）、それ以外は夕食 */
+export type SlotKey = MealKind | 'lunch'
+
 /** 1日分の献立。未入力の項目はキーごと持たない */
-export type DayMeals = Partial<Record<MealKind, string>>
+export type DayMeals = Partial<Record<SlotKey, string>>
 
 /** 日付キーは "YYYY-MM-DD" */
 export type MealPlan = Record<string, DayMeals>

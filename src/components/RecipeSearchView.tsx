@@ -142,7 +142,8 @@ export default function RecipeSearchView({ state, setState }: Props) {
             <span className="kind-box">
               {kinds.includes(kind) && <Icon name="check" size={12} strokeWidth={2.8} />}
             </span>
-            {MEAL_LABEL[kind]}
+            {/* 幅が足りないときは「メインの／おかず」の位置で折り返す */}
+            <span className="kind-text">{kind === 'main' ? <>メインの<wbr />おかず</> : MEAL_LABEL[kind]}</span>
           </label>
         ))}
       </div>

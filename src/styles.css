@@ -466,6 +466,19 @@ svg { display: block; flex-shrink: 0; }
   padding: 4px 0;
 }
 
+/* 土日の「お昼」「夜」の見出し */
+.meal-time {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.meal-time:first-of-type { margin-top: 2px; }
+
 .meal-label {
   width: 52px;
   flex-shrink: 0;
@@ -589,7 +602,8 @@ svg { display: block; flex-shrink: 0; }
 
 .kind-checks {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* 「メインのおかず」は文字数が多いので少し広めに */
+  grid-template-columns: 1.45fr 1fr 1fr;
   gap: 8px;
 }
 
@@ -611,6 +625,11 @@ svg { display: block; flex-shrink: 0; }
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
+}
+
+.kind-text {
+  word-break: keep-all; /* 折り返すなら <wbr> の位置（メインの／おかず）だけで */
+  line-height: 1.3;
 }
 
 .kind-check input {

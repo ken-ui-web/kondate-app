@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import type { MealKind, MealPlan } from '../lib/types'
+import type { DayMeals, MealKind, MealPlan, SlotKey } from '../lib/types'
 import { MEAL_KINDS, MEAL_LABEL, MEAL_SHORT } from '../lib/types'
 import { addDays, dayOfWeek, fmtDisplay, parseDate, today } from '../lib/dates'
 import Icon from './Icon'
@@ -17,11 +17,11 @@ export default function MenuView({ meals, setMeals }: Props) {
   const start = addDays(todayStr, page * DAYS)
   const dates = Array.from({ length: DAYS }, (_, i) => addDays(start, i))
 
-  const setMeal = (date: string, kind: MealKind, value: string) => {
+  const setMeal = (date: string, slot: SlotKey, value: string) => {
     setMeals((prev) => {
       const day = { ...(prev[date] ?? {}) }
-      if (value) day[kind] = value
-      else delete day[kind]
+      if (value) day[slot] = value
+      else delete day[slot]
       const next = { ...prev }
       if (Object.keys(day).length > 0) next[date] = day
       else delete next[date]
@@ -57,7 +57,7 @@ export default function MenuView({ meals, setMeals }: Props) {
             date={date}
             isToday={date === todayStr}
             meals={meals[date] ?? {}}
-            onChange={(kind, value) => setMeal(date, kind, value)}
+            onChange={(slot, value) => setMeal(date, slot, value)}
           />
         </div>
       ))}
@@ -77,11 +77,21 @@ function DayCard({
 }: {
   date: string
   isToday: boolean
-  meals: Partial<Record<MealKind, string>>
-  onChange: (kind: MealKind, value: string) => void
+  meals: DayMeals
+  onChange: (slot: SlotKey, value: string) => void
 }) {
   const dow = dayOfWeek(date)
   const d = parseDate(date)
+  const weekend = dow.index === 0 || dow.index === 6
+  const dinner = MEAL_KINDS.map((kind) => (
+    <MealSlot
+      key={kind}
+      kind={kind}
+      label={`${fmtDisplay(date)}の${weekend ? '夜の' : ''}${MEAL_LABEL[kind]}`}
+      value={meals[kind] ?? ''}
+      onChange={(v) => onChange(kind, v)}
+    />
+  ))
   return (
     <section className={`day-card ${isToday ? 'today' : ''}`}>
       <header className="day-head">
@@ -89,15 +99,22 @@ function DayCard({
         <span className={`day-dow ${dow.index === 0 ? 'sun' : dow.index === 6 ? 'sat' : ''}`}>{dow.label}</span>
         {isToday && <span className="day-today">今日</span>}
       </header>
-      {MEAL_KINDS.map((kind) => (
-        <MealSlot
-          key={kind}
-          kind={kind}
-          date={date}
-          value={meals[kind] ?? ''}
-          onChange={(v) => onChange(kind, v)}
-        />
-      ))}
+      {weekend ? (
+        <>
+          {/* 土日はお昼（メインのおかずのみ）も記録する */}
+          <div className="meal-time"><Icon name="sun" size={12} />お昼</div>
+          <MealSlot
+            kind="main"
+            label={`${fmtDisplay(date)}のお昼のメインのおかず`}
+            value={meals.lunch ?? ''}
+            onChange={(v) => onChange('lunch', v)}
+          />
+          <div className="meal-time"><Icon name="moon" size={12} />夜</div>
+          {dinner}
+        </>
+      ) : (
+        dinner
+      )}
     </section>
   )
 }
@@ -110,12 +127,13 @@ function DayCard({
  */
 function MealSlot({
   kind,
-  date,
+  label,
   value,
   onChange,
 }: {
   kind: MealKind
-  date: string
+  /** 読み上げ用の名前（例：10/17（土）のお昼のメインのおかず） */
+  label: string
   value: string
   onChange: (value: string) => void
 }) {
@@ -133,7 +151,7 @@ function MealSlot({
           value={value}
           placeholder={focused ? `${MEAL_LABEL[kind]}を入力` : ''}
           enterKeyHint="done"
-          aria-label={`${fmtDisplay(date)}の${MEAL_LABEL[kind]}`}
+          aria-label={label}
           onFocus={(e) => {
             setFocused(true)
             // 入力済みならタップ時に全選択し、そのまま打てば別の料理名に置き換わるようにする
