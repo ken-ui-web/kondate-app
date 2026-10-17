@@ -1,52 +1,24 @@
 import { useEffect, useState } from 'react'
-import type { CustomShoppingItem, FridgeItem, MonthPlan, Recipe, Settings } from './lib/types'
-import {
-  loadChecks, loadCustomShopping, loadFridge, loadPlans, loadRecipes, loadSettings,
-  saveChecks, saveCustomShopping, saveFridge, savePlans, saveRecipes, saveSettings,
-} from './lib/storage'
-import CalendarView from './components/CalendarView'
-import ShoppingView from './components/ShoppingView'
-import FridgeView from './components/FridgeView'
-import RecipesView from './components/RecipesView'
-import SettingsView from './components/SettingsView'
+import type { MealPlan, RecipeSearchState } from './lib/types'
+import { loadMeals, loadRecipeSearch, saveMeals, saveRecipeSearch } from './lib/storage'
+import MenuView from './components/MenuView'
+import RecipeSearchView from './components/RecipeSearchView'
 import Icon, { type IconName } from './components/Icon'
 
-type Tab = 'calendar' | 'shopping' | 'fridge' | 'recipes' | 'settings'
+type Tab = 'menu' | 'recipe'
 
 const TABS: { id: Tab; icon: IconName; label: string }[] = [
-  { id: 'calendar', icon: 'calendar', label: 'こんだて' },
-  { id: 'shopping', icon: 'cart', label: '買い物' },
-  { id: 'fridge', icon: 'fridge', label: '冷蔵庫' },
-  { id: 'recipes', icon: 'book', label: 'レシピ' },
-  { id: 'settings', icon: 'settings', label: '設定' },
+  { id: 'menu', icon: 'calendar', label: 'こんだて' },
+  { id: 'recipe', icon: 'book', label: 'レシピ' },
 ]
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('calendar')
-  const [recipes, setRecipes] = useState<Recipe[]>(loadRecipes)
-  const [plans, setPlans] = useState<Record<string, MonthPlan>>(loadPlans)
-  const [fridge, setFridge] = useState<FridgeItem[]>(loadFridge)
-  const [settings, setSettings] = useState<Settings>(loadSettings)
-  const [checks, setChecks] = useState<Record<string, boolean>>(loadChecks)
-  const [customShopping, setCustomShopping] =
-    useState<Record<string, CustomShoppingItem[]>>(loadCustomShopping)
+  const [tab, setTab] = useState<Tab>('menu')
+  const [meals, setMeals] = useState<MealPlan>(loadMeals)
+  const [recipeSearch, setRecipeSearch] = useState<RecipeSearchState>(loadRecipeSearch)
 
-  useEffect(() => saveRecipes(recipes), [recipes])
-  useEffect(() => savePlans(plans), [plans])
-  useEffect(() => saveFridge(fridge), [fridge])
-  useEffect(() => saveSettings(settings), [settings])
-  useEffect(() => saveChecks(checks), [checks])
-  useEffect(() => saveCustomShopping(customShopping), [customShopping])
-
-  // 設定インポート後などに全状態を読み直す
-  const reloadAll = () => {
-    setRecipes(loadRecipes())
-    setPlans(loadPlans())
-    setFridge(loadFridge())
-    setSettings(loadSettings())
-    setChecks(loadChecks())
-    setCustomShopping(loadCustomShopping())
-  }
+  useEffect(() => saveMeals(meals), [meals])
+  useEffect(() => saveRecipeSearch(recipeSearch), [recipeSearch])
 
   return (
     <>
@@ -56,28 +28,8 @@ export default function App() {
       </header>
 
       <main className="view" key={tab}>
-        {tab === 'calendar' && (
-          <CalendarView recipes={recipes} plans={plans} setPlans={setPlans} />
-        )}
-        {tab === 'shopping' && (
-          <ShoppingView
-            recipes={recipes} plans={plans} fridge={fridge} setFridge={setFridge}
-            settings={settings} checks={checks} setChecks={setChecks}
-            customShopping={customShopping} setCustomShopping={setCustomShopping}
-          />
-        )}
-        {tab === 'fridge' && (
-          <FridgeView
-            recipes={recipes} fridge={fridge} setFridge={setFridge}
-            plans={plans} setPlans={setPlans}
-          />
-        )}
-        {tab === 'recipes' && (
-          <RecipesView recipes={recipes} setRecipes={setRecipes} />
-        )}
-        {tab === 'settings' && (
-          <SettingsView settings={settings} setSettings={setSettings} onImported={reloadAll} />
-        )}
+        {tab === 'menu' && <MenuView meals={meals} setMeals={setMeals} />}
+        {tab === 'recipe' && <RecipeSearchView state={recipeSearch} setState={setRecipeSearch} />}
       </main>
 
       <nav className="tabbar">
@@ -85,7 +37,10 @@ export default function App() {
           <button
             key={t.id}
             className={`tab ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id)
+              window.scrollTo(0, 0)
+            }}
           >
             <span className="tab-ic">
               <Icon name={t.icon} size={20} strokeWidth={1.7} />

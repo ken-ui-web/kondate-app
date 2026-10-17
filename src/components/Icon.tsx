@@ -9,7 +9,7 @@ export type IconName =
   | 'plus' | 'minus' | 'x' | 'check' | 'search' | 'trash'
   | 'utensils' | 'soup' | 'bulb' | 'eye' | 'eye-off'
   | 'download' | 'upload' | 'users' | 'jar' | 'archive'
-  | 'camera' | 'key'
+  | 'camera' | 'key' | 'external'
 
 const PATHS: Record<IconName, ReactNode> = {
   calendar: (
@@ -151,6 +151,12 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="7.5" cy="15.5" r="3.5" />
       <path d="M9.9 13.1 18 5M15.2 8.8l2.3 2.3M18.5 5.5l2 2" />
+    </>
+  ),
+  external: (
+    <>
+      <path d="M14 4h6v6M20 4l-9 9" />
+      <path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10" />
     </>
   ),
 }
